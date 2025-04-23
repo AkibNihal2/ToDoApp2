@@ -1,21 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using To_DoApp.Models;
-using To_DoApp.Repositories;
+using To_DoApp.Services; 
 
 namespace To_DoApp.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly IRepository<Category> _categoryRepo;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(IRepository<Category> categoryRepo)
+        public CategoryController(ICategoryService categoryService)
         {
-            _categoryRepo = categoryRepo;
+            _categoryService = categoryService;
         }
 
         public IActionResult Index()
         {
-            var categories = _categoryRepo.GetAll();
+            var categories = _categoryService.GetAllCategories();
             return View(categories);
         }
 
@@ -24,9 +24,9 @@ namespace To_DoApp.Controllers
             // Initialize a new Category with auto-generated ID
             var newCategory = new Category
             {
-                CategoryId = Guid.NewGuid().ToString() // Auto-generate ID
+                CategoryId = Guid.NewGuid().ToString()
             };
-            return View(newCategory); // Pass the initialized model
+            return View(newCategory);
         }
 
         [HttpPost]
@@ -35,7 +35,7 @@ namespace To_DoApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _categoryRepo.Add(obj);
+                _categoryService.CreateCategory(obj);
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -48,7 +48,7 @@ namespace To_DoApp.Controllers
                 return NotFound();
             }
 
-            var category = _categoryRepo.Get(c => c.CategoryId == id);
+            var category = _categoryService.GetCategoryById(id);
 
             if (category == null)
             {
@@ -64,7 +64,7 @@ namespace To_DoApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _categoryRepo.Update(obj); // need to add Update method to your repository
+                _categoryService.UpdateCategory(obj);
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -77,7 +77,7 @@ namespace To_DoApp.Controllers
                 return NotFound();
             }
 
-            var category = _categoryRepo.Get(c => c.CategoryId == id);
+            var category = _categoryService.GetCategoryById(id);
 
             if (category == null)
             {
@@ -91,14 +91,14 @@ namespace To_DoApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePOST(string? id)
         {
-            var category = _categoryRepo.Get(c => c.CategoryId == id);
+            var category = _categoryService.GetCategoryById(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            _categoryRepo.Remove(category);
+            _categoryService.DeleteCategory(id);
             return RedirectToAction("Index");
         }
     }
