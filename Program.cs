@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using To_DoApp.Data;
 using To_DoApp.Repositories;
+using To_DoApp.Services;
 
 namespace ToDoApp2
 {
@@ -13,10 +14,16 @@ namespace ToDoApp2
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            // Register DbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ToDoContext")));
 
+            // Register repositories
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+            // Register services
+            builder.Services.AddScoped<IToDoService, ToDoService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             var app = builder.Build();
 

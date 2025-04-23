@@ -1,23 +1,64 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using To_DoApp.Models;
-using To_DoApp.Repositories;
+using To_DoApp.Services; 
 
 namespace To_DoApp.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly IRepository<ToDo> _todoRepo;
-        private readonly IRepository<Category> _categoryRepo;
+        private readonly IToDoService _todoService;
 
-        public HomeController(IRepository<ToDo> todoRepo, IRepository<Category> categoryRepo)
+        public HomeController(IToDoService todoService)
         {
-            _todoRepo = todoRepo;
-            _categoryRepo = categoryRepo;
+            _todoService = todoService;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string searchString, string statusFilter, string categoryFilter)
         {
-            var todos = _todoRepo.GetAll(includeProperties: "Category");
+            // Get all todos with categories included
+            var todos = _todoService.GetAllTodos();
+
+            // Apply search filter if provided
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                todos = todos.Where(t =>
+                    t.Title.ToLower().Contains(searchString) ||
+                    t.Description.ToLower().Contains(searchString));
+            }
+
+            // Apply status filter if provided
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                if (Enum.TryParse(statusFilter, out Models.TaskStatus status))
+                {
+                    todos = todos.Where(t => t.Status == status);
+                }
+            }
+
+            // Apply category filter if provided
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                todos = todos.Where(t => t.CategoryId == categoryFilter);
+            }
+
+            // Prepare dropdown data
+            ViewBag.StatusList = Enum.GetValues(typeof(Models.TaskStatus))
+                .Cast<Models.TaskStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Text = s.ToString(),
+                    Value = s.ToString()
+                });
+
+            ViewBag.CategoryList = _todoService.GetAllCategories()
+                .Select(c => new SelectListItem
+                {
+                    Text = c.CategoryName,
+                    Value = c.CategoryId
+                });
+
             return View(todos);
         }
 
@@ -29,8 +70,8 @@ namespace To_DoApp.Controllers
                 DueDate = DateTime.Today // Set default due date to today
             };
 
-            ViewBag.Categories = _categoryRepo.GetAll();
-            return View(newTodo); // Pass the initialized model
+            ViewBag.Categories = _todoService.GetAllCategories();
+            return View(newTodo);
         }
 
         [HttpPost]
@@ -39,10 +80,10 @@ namespace To_DoApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _todoRepo.Add(obj);
+                _todoService.CreateTodo(obj);
                 return RedirectToAction("Index");
             }
-            ViewBag.Categories = _categoryRepo.GetAll();
+            ViewBag.Categories = _todoService.GetAllCategories();
             return View(obj);
         }
 
@@ -53,14 +94,14 @@ namespace To_DoApp.Controllers
                 return NotFound();
             }
 
-            var todo = _todoRepo.Get(t => t.Id == id, includeProperties: "Category");
+            var todo = _todoService.GetTodoById(id.Value);
 
             if (todo == null)
             {
                 return NotFound();
             }
 
-            ViewBag.Categories = _categoryRepo.GetAll();
+            ViewBag.Categories = _todoService.GetAllCategories();
             return View(todo);
         }
 
@@ -70,10 +111,10 @@ namespace To_DoApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _todoRepo.Update(obj); // need to add Update method to your repository
+                _todoService.UpdateTodo(obj);
                 return RedirectToAction("Index");
             }
-            ViewBag.Categories = _categoryRepo.GetAll();
+            ViewBag.Categories = _todoService.GetAllCategories();
             return View(obj);
         }
 
@@ -84,7 +125,7 @@ namespace To_DoApp.Controllers
                 return NotFound();
             }
 
-            var todo = _todoRepo.Get(t => t.Id == id, includeProperties: "Category");
+            var todo = _todoService.GetTodoById(id.Value);
 
             if (todo == null)
             {
@@ -98,14 +139,14 @@ namespace To_DoApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePOST(int? id)
         {
-            var todo = _todoRepo.Get(t => t.Id == id);
+            var todo = _todoService.GetTodoById(id.Value);
 
             if (todo == null)
             {
                 return NotFound();
             }
 
-            _todoRepo.Remove(todo);
+            _todoService.DeleteTodo(todo.Id);
             return RedirectToAction("Index");
         }
 
@@ -116,23 +157,7 @@ namespace To_DoApp.Controllers
                 return NotFound();
             }
 
-            var todo = _todoRepo.Get(t => t.Id == id);
-
-            if (todo == null)
-            {
-                return NotFound();
-            }
-
-            // Cycle through statuses
-            todo.Status = todo.Status switch
-            {
-                Models.TaskStatus.Todo => Models.TaskStatus.InProgress,
-                Models.TaskStatus.InProgress => Models.TaskStatus.Completed,
-                Models.TaskStatus.Completed => Models.TaskStatus.Todo,
-                _ => todo.Status
-            };
-
-            _todoRepo.Update(todo); // need to add Update method to your repository
+            _todoService.ToggleTodoStatus(id.Value);
             return RedirectToAction("Index");
         }
     }

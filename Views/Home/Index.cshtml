@@ -20,6 +20,27 @@
     </div>
     <br /><br />
 
+    <form method="get" class="row mb-4">
+        <div class="col-md-4">
+            <input type="text" name="searchString" value="@Context.Request.Query["searchString"]"
+                   class="form-control" placeholder="Search title/description" />
+        </div>
+        <div class="col-md-3">
+            <select name="statusFilter" class="form-control" asp-items="ViewBag.StatusList">
+                <option value="">All Statuses</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="categoryFilter" class="form-control" asp-items="ViewBag.CategoryList">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a asp-action="Index" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+
     <table class="table table-bordered table-striped" style="width:100%">
         <thead>
             <tr>
