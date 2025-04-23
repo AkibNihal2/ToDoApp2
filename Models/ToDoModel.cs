@@ -1,12 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-
+using Microsoft.AspNetCore.Mvc.Rendering;
+using ToDoApp2.Enum;
 namespace To_DoApp.Models
-{
-    public enum TaskStatus { Todo, InProgress, Completed }
-
-    public class ToDo
+{  
+    public class ToDoModel
     {
+        public ToDoModel()
+        {
+            CategorySelectList = new List<SelectListItem>();
+        }
         [Key]
         public int Id { get; set; }
 
@@ -22,10 +24,11 @@ namespace To_DoApp.Models
         [Required(ErrorMessage = "Please select a category")]
         public string CategoryId { get; set; } = string.Empty;
 
-        [ValidateNever]
-        public Category Category { get; set; } = null!;
+        public CategoryModel Category { get; set; } = null!;
 
-        [Required(ErrorMessage = "Please select a status")]
-        public TaskStatus Status { get; set; } = TaskStatus.Todo; // Default value
+        [Required(ErrorMessage = "Please select a status")] 
+        public int StatusId { get; set; }
+        public TodoStatus TodoStatus { get; set; }
+        public IList<SelectListItem> CategorySelectList { get; set; }
     }
 }

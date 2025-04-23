@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using To_DoApp.Data;
+using To_DoApp.Factory;
 using To_DoApp.Repositories;
 using To_DoApp.Services;
 
@@ -24,6 +25,7 @@ namespace ToDoApp2
             // Register services
             builder.Services.AddScoped<IToDoService, ToDoService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<IToDoFactory, ToDoFactory>();
 
             var app = builder.Build();
 

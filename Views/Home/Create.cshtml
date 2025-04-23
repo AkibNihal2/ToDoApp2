@@ -1,4 +1,4 @@
-﻿@model ToDo
+﻿@model ToDoModel
 @using To_DoApp.Models
 
 @{
@@ -29,7 +29,7 @@
         </div>
         <div class="mb-3">
             <label asp-for="CategoryId"></label>
-            <select asp-for="CategoryId" asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "CategoryName"))" class="form-control">
+            <select asp-for="CategoryId" asp-items="Model.CategorySelectList" class="form-control">
                 <option value="">-- Select Category --</option>
             </select>
             <span asp-validation-for="CategoryId" class="text-danger"></span>

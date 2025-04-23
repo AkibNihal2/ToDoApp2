@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using To_DoApp.Factory;
 using To_DoApp.Models;
 using To_DoApp.Services; 
 
@@ -8,10 +9,12 @@ namespace To_DoApp.Controllers
     public class HomeController : Controller
     {
         private readonly IToDoService _todoService;
+        private readonly IToDoFactory _toDoFactory;
 
-        public HomeController(IToDoService todoService)
+        public HomeController(IToDoService todoService, IToDoFactory toDoFactory)
         {
             _todoService = todoService;
+            _toDoFactory = toDoFactory;
         }
 
         public IActionResult Index(string searchString, string statusFilter, string categoryFilter)
@@ -64,19 +67,15 @@ namespace To_DoApp.Controllers
 
         public IActionResult Create()
         {
-            // Initialize a new ToDo object with default values
-            var newTodo = new ToDo
-            {
-                DueDate = DateTime.Today // Set default due date to today
-            };
+            var newTodo = new ToDoModel();
+            _toDoFactory.PrepareAndCreateTodoModel(newTodo);
 
-            ViewBag.Categories = _todoService.GetAllCategories();
             return View(newTodo);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(ToDo obj)
+        public IActionResult Create(ToDoModel model)
         {
             if (ModelState.IsValid)
             {

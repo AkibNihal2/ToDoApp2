@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
-using To_DoApp.Models;
+using To_DoApp.Domain;
 
 namespace To_DoApp.Data
 {
