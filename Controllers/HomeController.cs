@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using To_DoApp.Models;
 using To_DoApp.Services; 
 
@@ -13,9 +14,51 @@ namespace To_DoApp.Controllers
             _todoService = todoService;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string searchString, string statusFilter, string categoryFilter)
         {
+            // Get all todos with categories included
             var todos = _todoService.GetAllTodos();
+
+            // Apply search filter if provided
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                todos = todos.Where(t =>
+                    t.Title.ToLower().Contains(searchString) ||
+                    t.Description.ToLower().Contains(searchString));
+            }
+
+            // Apply status filter if provided
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                if (Enum.TryParse(statusFilter, out Models.TaskStatus status))
+                {
+                    todos = todos.Where(t => t.Status == status);
+                }
+            }
+
+            // Apply category filter if provided
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                todos = todos.Where(t => t.CategoryId == categoryFilter);
+            }
+
+            // Prepare dropdown data
+            ViewBag.StatusList = Enum.GetValues(typeof(Models.TaskStatus))
+                .Cast<Models.TaskStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Text = s.ToString(),
+                    Value = s.ToString()
+                });
+
+            ViewBag.CategoryList = _todoService.GetAllCategories()
+                .Select(c => new SelectListItem
+                {
+                    Text = c.CategoryName,
+                    Value = c.CategoryId
+                });
+
             return View(todos);
         }
 
