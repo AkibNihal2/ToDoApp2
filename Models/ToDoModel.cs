@@ -1,34 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using ToDoApp2.Enum;
+using To_DoApp.Enum;
+
 namespace To_DoApp.Models
-{  
+{
     public class ToDoModel
     {
-        public ToDoModel()
-        {
-            CategorySelectList = new List<SelectListItem>();
-        }
-        [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Please provide a title")]
-        public string Title { get; set; } = string.Empty; 
+        [Required(ErrorMessage = "Title is required")]
+        public string Title { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please provide the description")]
+        [Required(ErrorMessage = "Description is required")]
         public string Description { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please provide the due date")]
+        [Required(ErrorMessage = "Due date is required")]
         public DateTime? DueDate { get; set; }
 
-        [Required(ErrorMessage = "Please select a category")]
+        [Required(ErrorMessage = "Category is required")]
         public string CategoryId { get; set; } = string.Empty;
 
-        public CategoryModel Category { get; set; } = null!;
-
-        [Required(ErrorMessage = "Please select a status")] 
+        [Required(ErrorMessage = "Status is required")]
         public int StatusId { get; set; }
-        public TodoStatus TodoStatus { get; set; }
-        public IList<SelectListItem> CategorySelectList { get; set; }
+
+        public string CategoryName { get; set; } = string.Empty;
     }
 }

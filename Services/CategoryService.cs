@@ -1,44 +1,61 @@
-﻿
+﻿using Microsoft.EntityFrameworkCore;
+using To_DoApp.Data;
 using To_DoApp.Domain;
-using To_DoApp.Repositories;
+using To_DoApp.Models;
 
 namespace To_DoApp.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly IRepository<Category> _categoryRepository;
+        private readonly ApplicationDbContext _context;
 
-        public CategoryService(IRepository<Category> categoryRepository)
+        public CategoryService(ApplicationDbContext context)
         {
-            _categoryRepository = categoryRepository;
+            _context = context;
         }
 
-        public IEnumerable<Category> GetAllCategories()
+        public IEnumerable<CategoryModel> GetAllCategories()
         {
-            return _categoryRepository.GetAll();
+            return _context.Categories
+                .Select(c => new CategoryModel
+                {
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.CategoryName
+                })
+                .ToList();
         }
 
-        public Category GetCategoryById(string id)
+        public CategoryModel GetCategoryById(string id)
         {
-            return _categoryRepository.Get(c => c.CategoryId == id);
+            return _context.Categories
+                .Where(c => c.CategoryId == id)
+                .Select(c => new CategoryModel
+                {
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.CategoryName
+                })
+                .FirstOrDefault();
         }
 
         public void CreateCategory(Category category)
         {
-            _categoryRepository.Add(category);
+            _context.Categories.Add(category);
+            _context.SaveChanges();
         }
 
         public void UpdateCategory(Category category)
         {
-            _categoryRepository.Update(category);
+            _context.Categories.Update(category);
+            _context.SaveChanges();
         }
 
         public void DeleteCategory(string id)
         {
-            var category = GetCategoryById(id);
+            var category = _context.Categories.Find(id);
             if (category != null)
             {
-                _categoryRepository.Remove(category);
+                _context.Categories.Remove(category);
+                _context.SaveChanges();
             }
         }
     }

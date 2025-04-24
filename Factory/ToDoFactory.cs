@@ -1,98 +1,80 @@
-﻿
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using To_DoApp.Domain;
-using To_DoApp.Factory;
+using To_DoApp.Enum;
 using To_DoApp.Models;
-using To_DoApp.Repositories;
+using To_DoApp.Services;
+using System;
 
-namespace To_DoApp.Services
+namespace To_DoApp.Factory
 {
     public class ToDoFactory : IToDoFactory
     {
-        private readonly IToDoService _todoService;
         private readonly ICategoryService _categoryService;
 
-        public ToDoFactory(IToDoService todoService, ICategoryService categoryService)
+        public ToDoFactory(ICategoryService categoryService)
         {
-            _todoService = todoService;
             _categoryService = categoryService;
         }
 
-        //public IEnumerable<ToDo> GetAllTodos()
-        //{
-        //    return _todoRepository.GetAll(includeProperties: "Category");
-        //}
-
-        //public ToDo GetTodoById(int id)
-        //{
-        //    return _todoRepository.Get(t => t.Id == id, includeProperties: "Category");
-        //}
-
-        public ToDoModel PrepareAndCreateTodoModel(ToDoModel model)
+        public ToDoModel CreateToDoModel()
         {
-
-           var categories = _categoryService.GetAllCategories();
-            if (categories != null)
+            return new ToDoModel
             {
-                model.CategorySelectList = categories.Select(c => new SelectListItem
+                DueDate = DateTime.Today,
+                StatusId = (int)ToDoStatus.Todo
+            };
+        }
+
+        public ToDoListViewModel CreateToDoListViewModel()
+        {
+            return new ToDoListViewModel
+            {
+                AvailableStatuses = GetStatusDropdownItems(),
+                AvailableCategories = GetCategoryDropdownItems()
+            };
+        }
+
+        public ToDoCreateEditViewModel CreateToDoCreateEditViewModel()
+        {
+            return new ToDoCreateEditViewModel
+            {
+                ToDo = CreateToDoModel(),
+                Categories = GetCategoryDropdownItems(),
+                Statuses = GetStatusDropdownItems()
+            };
+        }
+
+        public ToDo CreateToDo(ToDoModel model)
+        {
+            return new ToDo
+            {
+                Title = model.Title,
+                Description = model.Description,
+                DueDate = model.DueDate,
+                CategoryId = model.CategoryId,
+                StatusId = model.StatusId
+            };
+        }
+
+        public List<SelectListItem> GetCategoryDropdownItems()
+        {
+            return _categoryService.GetAllCategories()
+                .Select(c => new SelectListItem
                 {
                     Value = c.CategoryId,
                     Text = c.CategoryName
                 }).ToList();
-            }
-
-            return model;
         }
 
-        public ToDoModel PrepareAndCreateTodo(ToDoModel model)
+        public List<SelectListItem> GetStatusDropdownItems()
         {
-
-             var todo = new ToDo()
-             {
-                 CategoryId = model.CategoryId,
-                 Title = model.Title,
-                 Description = model.Description,
-
-             }
-             //service..
-
-            return model;
+            return System.Enum.GetValues(typeof(ToDoStatus))
+                .Cast<ToDoStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Value = ((int)s).ToString(),
+                    Text = s.ToString()
+                }).ToList();
         }
-
-
-        //public void UpdateTodo(ToDo todo)
-        //{
-        //    _todoRepository.Update(todo);
-        //}
-
-        //public void DeleteTodo(int id)
-        //{
-        //    var todo = GetTodoById(id);
-        //    if (todo != null)
-        //    {
-        //        _todoRepository.Remove(todo);
-        //    }
-        //}
-
-        //public void ToggleTodoStatus(int id)
-        //{
-        //    var todo = GetTodoById(id);
-        //    if (todo != null)
-        //    {
-        //        todo.Status = todo.Status switch
-        //        {
-        //            Models.TaskStatus.Todo => Models.TaskStatus.InProgress,
-        //            Models.TaskStatus.InProgress => Models.TaskStatus.Completed,
-        //            Models.TaskStatus.Completed => Models.TaskStatus.Todo,
-        //            _ => todo.Status
-        //        };
-        //        UpdateTodo(todo);
-        //    }
-        //}
-
-        //public IEnumerable<Category> GetAllCategories()
-        //{
-        //    return _categoryRepository.GetAll();
-        //}
     }
 }

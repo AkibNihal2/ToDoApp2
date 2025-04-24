@@ -1,68 +1,116 @@
-﻿
+﻿using Microsoft.EntityFrameworkCore;
+using To_DoApp.Data;
 using To_DoApp.Domain;
-using To_DoApp.Repositories;
+using To_DoApp.Enum;
+using To_DoApp.Models;
 
 namespace To_DoApp.Services
 {
     public class ToDoService : IToDoService
     {
-        private readonly IRepository<ToDo> _todoRepository;
-        private readonly IRepository<Category> _categoryRepository;
+        private readonly ApplicationDbContext _context;
 
-        public ToDoService(IRepository<ToDo> todoRepository, IRepository<Category> categoryRepository)
+        public ToDoService(ApplicationDbContext context)
         {
-            _todoRepository = todoRepository;
-            _categoryRepository = categoryRepository;
+            _context = context;
         }
 
-        public IEnumerable<ToDo> GetAllTodos()
+
+        public IEnumerable<ToDoModel> GetAllTodos()
         {
-            return _todoRepository.GetAll(includeProperties: "Category");
+            return (from todo in _context.ToDos
+                    join category in _context.Categories
+                    on todo.CategoryId equals category.CategoryId
+                    select new ToDoModel
+                    {
+                        Id = todo.Id,
+                        Title = todo.Title,
+                        Description = todo.Description,
+                        DueDate = todo.DueDate,
+                        CategoryId = todo.CategoryId,
+                        CategoryName = category.CategoryName, // From joined table
+                        StatusId = todo.StatusId
+                    }).ToList();
         }
 
-        public ToDo GetTodoById(int id)
+        public ToDoModel GetTodoById(int id)
         {
-            return _todoRepository.Get(t => t.Id == id, includeProperties: "Category");
+            return (from todo in _context.ToDos
+                    where todo.Id == id
+                    join category in _context.Categories on todo.CategoryId equals category.CategoryId
+                    select new ToDoModel
+                    {
+                        Id = todo.Id,
+                        Title = todo.Title,
+                        Description = todo.Description,
+                        DueDate = todo.DueDate,
+                        CategoryId = todo.CategoryId,
+                        StatusId = todo.StatusId
+                    }).FirstOrDefault();
         }
 
         public void CreateTodo(ToDo todo)
         {
-            _todoRepository.Add(todo);
+            _context.ToDos.Add(todo);
+            _context.SaveChanges();
         }
 
         public void UpdateTodo(ToDo todo)
         {
-            _todoRepository.Update(todo);
+            _context.ToDos.Update(todo);
+            _context.SaveChanges();
         }
 
         public void DeleteTodo(int id)
         {
-            var todo = GetTodoById(id);
+            var todo = _context.ToDos.Find(id);
             if (todo != null)
             {
-                _todoRepository.Remove(todo);
+                _context.ToDos.Remove(todo);
+                _context.SaveChanges();
             }
         }
 
-        public void ToggleTodoStatus(int id)
+        public IEnumerable<Category> GetAllCategoryEntities()
         {
-            var todo = GetTodoById(id);
-            if (todo != null)
-            {
-                todo.Status = todo.Status switch
-                {
-                    Models.TaskStatus.Todo => Models.TaskStatus.InProgress,
-                    Models.TaskStatus.InProgress => Models.TaskStatus.Completed,
-                    Models.TaskStatus.Completed => Models.TaskStatus.Todo,
-                    _ => todo.Status
-                };
-                UpdateTodo(todo);
-            }
+            return _context.Categories.ToList();
         }
 
-        public IEnumerable<Category> GetAllCategories()
+        public IEnumerable<ToDoModel> GetFilteredTodos(string searchString, string statusFilter, string categoryFilter)
         {
-            return _categoryRepository.GetAll();
+            var query = from todo in _context.ToDos
+                        join category in _context.Categories on todo.CategoryId equals category.CategoryId
+                        select new { todo, category };
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(x => x.todo.Title.Contains(searchString) ||
+                                       x.todo.Description.Contains(searchString));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrEmpty(statusFilter) && System.Enum.TryParse<ToDoStatus>(statusFilter, out var status))
+            {
+                query = query.Where(x => x.todo.StatusId == (int)status);
+            }
+
+            // Apply category filter
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                query = query.Where(x => x.todo.CategoryId == categoryFilter);
+            }
+
+            return query.Select(x => new ToDoModel
+            {
+                Id = x.todo.Id,
+                Title = x.todo.Title,
+                Description = x.todo.Description,
+                DueDate = x.todo.DueDate,
+                CategoryId = x.todo.CategoryId,
+                CategoryName = x.category.CategoryName,
+                StatusId = x.todo.StatusId
+            }).ToList();
         }
     }
 }

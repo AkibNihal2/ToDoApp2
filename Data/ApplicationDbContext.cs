@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Reflection.Emit;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using To_DoApp.Domain;
 
 namespace To_DoApp.Data
@@ -16,7 +14,7 @@ namespace To_DoApp.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Seed some initial categories
+            // Seed initial data
             modelBuilder.Entity<Category>().HasData(
                 new Category { CategoryId = "1", CategoryName = "Work" },
                 new Category { CategoryId = "2", CategoryName = "Personal" },

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ToDoApp2.Migrations
 {
     /// <inheritdoc />
-    public partial class intial : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -34,18 +34,12 @@ namespace ToDoApp2.Migrations
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    CategoryId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StatusId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ToDos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ToDos_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "CategoryId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -57,21 +51,16 @@ namespace ToDoApp2.Migrations
                     { "2", "Personal" },
                     { "3", "Urgent" }
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ToDos_CategoryId",
-                table: "ToDos",
-                column: "CategoryId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ToDos");
+                name: "Categories");
 
             migrationBuilder.DropTable(
-                name: "Categories");
+                name: "ToDos");
         }
     }
 }

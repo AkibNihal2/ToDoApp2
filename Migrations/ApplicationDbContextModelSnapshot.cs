@@ -22,7 +22,7 @@ namespace ToDoApp2.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("To_DoApp.Models.Category", b =>
+            modelBuilder.Entity("To_DoApp.Domain.Category", b =>
                 {
                     b.Property<string>("CategoryId")
                         .HasColumnType("nvarchar(450)");
@@ -53,7 +53,7 @@ namespace ToDoApp2.Migrations
                         });
                 });
 
-            modelBuilder.Entity("To_DoApp.Models.ToDo", b =>
+            modelBuilder.Entity("To_DoApp.Domain.ToDo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -63,7 +63,7 @@ namespace ToDoApp2.Migrations
 
                     b.Property<string>("CategoryId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -72,7 +72,7 @@ namespace ToDoApp2.Migrations
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("StatusId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -81,20 +81,7 @@ namespace ToDoApp2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.ToTable("ToDos");
-                });
-
-            modelBuilder.Entity("To_DoApp.Models.ToDo", b =>
-                {
-                    b.HasOne("To_DoApp.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 #pragma warning restore 612, 618
         }

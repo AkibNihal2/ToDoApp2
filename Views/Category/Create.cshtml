@@ -1,26 +1,36 @@
-﻿@model Category
-@using To_DoApp.Models
+﻿@model To_DoApp.Models.CategoryModel
 
 @{
-    ViewData["Title"] = (string.IsNullOrEmpty(Model.CategoryId) ? "Create" : "Edit") + " Category";
+    ViewData["Title"] = "Create Category";
 }
 
-<form method="post">
-    <div class="border p-3 mt-4">
-        <div class="row pb-2">
-            <h2 class="text-primary">@(string.IsNullOrEmpty(Model.CategoryId) ? "Create" : "Edit") Category</h2>
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-12">
+            <h2 class="text-primary">Create Category</h2>
             <hr />
         </div>
-        <div asp-validation-summary="All"></div>
-        <div class="mb-3">
-            <label asp-for="CategoryName"></label>
-            <input asp-for="CategoryName" class="form-control" />
-            <span asp-validation-for="CategoryName" class="text-danger"></span>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:150px">@(string.IsNullOrEmpty(Model.CategoryId) ? "Create" : "Update")</button>
-        <a asp-controller="Category" asp-action="Index" class="btn btn-secondary" style="width:150px">Back to List</a>
     </div>
-</form>
+
+    <div class="border p-3 mt-4">
+        <form asp-action="Create">
+            <div class="mb-3">
+                <label asp-for="CategoryName" class="form-label"></label>
+                <input asp-for="CategoryName" class="form-control" />
+                <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary" style="width:150px">
+                    <i class="bi bi-save"></i> Create
+                </button>
+                <a asp-action="Index" class="btn btn-secondary" style="width:150px">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     @{

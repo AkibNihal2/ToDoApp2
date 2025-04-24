@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using To_DoApp.Domain;
 using To_DoApp.Models;
-using To_DoApp.Services; 
+using To_DoApp.Services;
 
 namespace To_DoApp.Controllers
 {
@@ -21,35 +22,30 @@ namespace To_DoApp.Controllers
 
         public IActionResult Create()
         {
-            // Initialize a new Category with auto-generated ID
-            var newCategory = new Category
-            {
-                CategoryId = Guid.NewGuid().ToString()
-            };
-            return View(newCategory);
+            return View(new CategoryModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Category obj)
+        public IActionResult Create(CategoryModel model)
         {
             if (ModelState.IsValid)
             {
-                _categoryService.CreateCategory(obj);
+                var category = new Category
+                {
+                    CategoryName = model.CategoryName
+                };
+
+                _categoryService.CreateCategory(category);
                 return RedirectToAction("Index");
             }
-            return View(obj);
+
+            return View(model);
         }
 
-        public IActionResult Edit(string? id)
+        public IActionResult Edit(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var category = _categoryService.GetCategoryById(id);
-
             if (category == null)
             {
                 return NotFound();
@@ -60,25 +56,26 @@ namespace To_DoApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Category obj)
+        public IActionResult Edit(CategoryModel model)
         {
             if (ModelState.IsValid)
             {
-                _categoryService.UpdateCategory(obj);
+                var category = new Category
+                {
+                    CategoryId = model.CategoryId,
+                    CategoryName = model.CategoryName
+                };
+
+                _categoryService.UpdateCategory(category);
                 return RedirectToAction("Index");
             }
-            return View(obj);
+
+            return View(model);
         }
 
-        public IActionResult Delete(string? id)
+        public IActionResult Delete(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var category = _categoryService.GetCategoryById(id);
-
             if (category == null)
             {
                 return NotFound();
@@ -89,15 +86,8 @@ namespace To_DoApp.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeletePOST(string? id)
+        public IActionResult DeleteConfirmed(string id)
         {
-            var category = _categoryService.GetCategoryById(id);
-
-            if (category == null)
-            {
-                return NotFound();
-            }
-
             _categoryService.DeleteCategory(id);
             return RedirectToAction("Index");
         }

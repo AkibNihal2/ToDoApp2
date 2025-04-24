@@ -1,131 +1,109 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using To_DoApp.Domain;
+using To_DoApp.Enum;
 using To_DoApp.Factory;
 using To_DoApp.Models;
-using To_DoApp.Services; 
+using To_DoApp.Services;
 
 namespace To_DoApp.Controllers
 {
     public class HomeController : Controller
     {
         private readonly IToDoService _todoService;
-        private readonly IToDoFactory _toDoFactory;
+        private readonly IToDoFactory _todoFactory;
 
-        public HomeController(IToDoService todoService, IToDoFactory toDoFactory)
+        public HomeController(IToDoService todoService, IToDoFactory todoFactory)
         {
             _todoService = todoService;
-            _toDoFactory = toDoFactory;
+            _todoFactory = todoFactory;
         }
 
-        public IActionResult Index(string searchString, string statusFilter, string categoryFilter)
+        public IActionResult Index(ToDoListViewModel filterModel)
         {
-            // Get all todos with categories included
-            var todos = _todoService.GetAllTodos();
+            var viewModel = _todoFactory.CreateToDoListViewModel();
+            viewModel.ToDoList = _todoService.GetFilteredTodos(
+                filterModel.SearchString,
+                filterModel.StatusFilter,
+                filterModel.CategoryFilter).ToList();
 
-            // Apply search filter if provided
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                searchString = searchString.ToLower();
-                todos = todos.Where(t =>
-                    t.Title.ToLower().Contains(searchString) ||
-                    t.Description.ToLower().Contains(searchString));
-            }
+            viewModel.SearchString = filterModel.SearchString;
+            viewModel.StatusFilter = filterModel.StatusFilter;
+            viewModel.CategoryFilter = filterModel.CategoryFilter;
 
-            // Apply status filter if provided
-            if (!string.IsNullOrEmpty(statusFilter))
-            {
-                if (Enum.TryParse(statusFilter, out Models.TaskStatus status))
-                {
-                    todos = todos.Where(t => t.Status == status);
-                }
-            }
-
-            // Apply category filter if provided
-            if (!string.IsNullOrEmpty(categoryFilter))
-            {
-                todos = todos.Where(t => t.CategoryId == categoryFilter);
-            }
-
-            // Prepare dropdown data
-            ViewBag.StatusList = Enum.GetValues(typeof(Models.TaskStatus))
-                .Cast<Models.TaskStatus>()
-                .Select(s => new SelectListItem
-                {
-                    Text = s.ToString(),
-                    Value = s.ToString()
-                });
-
-            ViewBag.CategoryList = _todoService.GetAllCategories()
-                .Select(c => new SelectListItem
-                {
-                    Text = c.CategoryName,
-                    Value = c.CategoryId
-                });
-
-            return View(todos);
+            return View(viewModel);
         }
 
         public IActionResult Create()
         {
-            var newTodo = new ToDoModel();
-            _toDoFactory.PrepareAndCreateTodoModel(newTodo);
-
-            return View(newTodo);
+            return View(_todoFactory.CreateToDoCreateEditViewModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(ToDoModel model)
+        public IActionResult Create(ToDoCreateEditViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                _todoService.CreateTodo(obj);
+                var todo = _todoFactory.CreateToDo(viewModel.ToDo);
+                _todoService.CreateTodo(todo);
                 return RedirectToAction("Index");
             }
-            ViewBag.Categories = _todoService.GetAllCategories();
-            return View(obj);
+
+
+            viewModel.Categories = _todoFactory.GetCategoryDropdownItems();
+            viewModel.Statuses = _todoFactory.GetStatusDropdownItems();
+            return View(viewModel);
         }
 
-        public IActionResult Edit(int? id)
+        public IActionResult Edit(int id)
         {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            var todo = _todoService.GetTodoById(id.Value);
-
+            var todo = _todoService.GetTodoById(id);
             if (todo == null)
             {
                 return NotFound();
             }
 
-            ViewBag.Categories = _todoService.GetAllCategories();
-            return View(todo);
+            var viewModel = _todoFactory.CreateToDoCreateEditViewModel();
+            viewModel.ToDo.Id = todo.Id;
+            viewModel.ToDo.Title = todo.Title;
+            viewModel.ToDo.Description = todo.Description;
+            viewModel.ToDo.DueDate = todo.DueDate;
+            viewModel.ToDo.CategoryId = todo.CategoryId;
+            viewModel.ToDo.StatusId = todo.StatusId;
+
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(ToDo obj)
+        public IActionResult Edit(ToDoCreateEditViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                _todoService.UpdateTodo(obj);
+                var todo = new ToDo
+                {
+                    Id = viewModel.ToDo.Id,
+                    Title = viewModel.ToDo.Title,
+                    Description = viewModel.ToDo.Description,
+                    DueDate = viewModel.ToDo.DueDate,
+                    CategoryId = viewModel.ToDo.CategoryId,
+                    StatusId = viewModel.ToDo.StatusId
+                };
+
+                _todoService.UpdateTodo(todo);
                 return RedirectToAction("Index");
             }
-            ViewBag.Categories = _todoService.GetAllCategories();
-            return View(obj);
+
+            
+            viewModel.Categories = _todoFactory.GetCategoryDropdownItems();
+            viewModel.Statuses = _todoFactory.GetStatusDropdownItems();
+            return View(viewModel);
         }
 
-        public IActionResult Delete(int? id)
+        public IActionResult Delete(int id)
         {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            var todo = _todoService.GetTodoById(id.Value);
-
+            var todo = _todoService.GetTodoById(id);
             if (todo == null)
             {
                 return NotFound();
@@ -136,27 +114,9 @@ namespace To_DoApp.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeletePOST(int? id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            var todo = _todoService.GetTodoById(id.Value);
-
-            if (todo == null)
-            {
-                return NotFound();
-            }
-
-            _todoService.DeleteTodo(todo.Id);
-            return RedirectToAction("Index");
-        }
-
-        public IActionResult ToggleStatus(int? id)
-        {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            _todoService.ToggleTodoStatus(id.Value);
+            _todoService.DeleteTodo(id);
             return RedirectToAction("Index");
         }
     }
